@@ -1,0 +1,64 @@
+{
+  "name": "weekly-planner",
+  "productName": "ANZIKA",
+  "desktopName": "weekly-planner.desktop",
+  "version": "1.0.0",
+  "description": "Desktop weekly plan manager with tasks, assignees, recurring duties and weekly report (PPT) export",
+  "author": "mutabazi",
+  "license": "MIT",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
+    "smoke": "electron-vite build && electron out/main/index.js --smoke",
+    "smoke:ui": "electron-vite build && electron out/main/index.js --smoke-ui",
+    "test": "npm run typecheck && electron-vite build && electron out/main/index.js --smoke && electron out/main/index.js --smoke-ui && electron out/main/index.js --smoke-auth",
+    "package": "electron-vite build && electron-builder --dir",
+    "dist": "electron-vite build && electron-builder --linux AppImage"
+  },
+  "build": {
+    "appId": "com.mutabazi.weeklyplanner",
+    "productName": "ANZIKA",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "out/**",
+      "build/icon.png",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "dir"
+      ],
+      "category": "Office",
+      "icon": "build/icon.png",
+      "synopsis": "Weekly plan board with recurring tasks and report export",
+      "maintainer": "mutabazi",
+      "vendor": "mutabazi",
+      "syncDesktopName": true
+    }
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "image-size": "^2.0.4",
+    "pptxgenjs": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "^44.4.5",
+    "electron-builder": "^26.17.0",
+    "electron-vite": "^5.0.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.6"
+  }
+}
