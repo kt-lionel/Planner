@@ -354,21 +354,21 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
 };
 
 export const STATUS_COLORS: Record<TaskStatus, string> = {
-  todo: '#60a5fa',
-  in_progress: '#facc15',
-  blocked: '#f87171',
-  done: '#34d399',
-  canceled: '#94a3b8'
+  todo: '#00f0ff',
+  in_progress: '#fcd200',
+  blocked: '#ff4d6d',
+  done: '#27e2a4',
+  canceled: '#5d6675'
 };
 
 export const RISK_ORDER: RiskFactor[] = ['Critical', 'High', 'Medium', 'Low', 'Info'];
 
 export const RISK_COLORS: Record<RiskFactor, string> = {
-  Critical: '#c00000',
-  High: '#ff0000',
-  Medium: '#ffb000',
-  Low: '#00b050',
-  Info: '#808080'
+  Critical: '#ff3040',
+  High: '#ff4d6d',
+  Medium: '#fcd200',
+  Low: '#27e2a4',
+  Info: '#8a95a8'
 };
 
 export const FINDING_STATUSES: FindingStatus[] = [

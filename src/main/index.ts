@@ -2445,6 +2445,17 @@ async function runAuthSmoke(): Promise<void> {
 
   const snap = async (name: string): Promise<void> => {
     try {
+      // Force a fresh composite, then capture twice: the first call may return
+      // the previously composited frame while a repaint is still pending.
+      window.webContents.invalidate();
+      await new Promise((r) => setTimeout(r, 150));
+      const warm = await Promise.race([
+        window.webContents.capturePage(),
+        new Promise<never>((_resolve, reject) =>
+          setTimeout(() => reject(new Error('capture timeout')), 3000)
+        )
+      ]);
+      void warm;
       const image = await Promise.race([
         window.webContents.capturePage(),
         new Promise<never>((_resolve, reject) =>

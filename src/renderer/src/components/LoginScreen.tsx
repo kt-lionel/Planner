@@ -135,12 +135,16 @@ export default function LoginScreen({
         </aside>
 
         <main className="auth-panel">
+          <div className="auth-ribbon">
+            <span>ANZIKA VAULT <b className="dot">//</b> RECOVERY KEY</span>
+            <span className="live">ONE-TIME</span>
+          </div>
           <div className="auth-card">
             <div className="auth-card-head">
               <span className="auth-icon setup">🔑</span>
               <div>
                 <h2>Save your recovery key</h2>
-                <p>The only way back in if you forget your password.</p>
+                <p>&gt; the only way back in if you forget your password _</p>
               </div>
             </div>
 
@@ -229,6 +233,10 @@ export default function LoginScreen({
       </aside>
 
       <main className="auth-panel">
+        <div className="auth-ribbon">
+          <span>ANZIKA VAULT <b className="dot">//</b> ACCESS</span>
+          <span className="live">SECURE</span>
+        </div>
         <form
           className="auth-card"
           onSubmit={(e) => {
@@ -246,14 +254,14 @@ export default function LoginScreen({
                   ? 'Create your profile'
                   : mode === 'recovery'
                     ? 'Reset your password'
-                    : 'Welcome back'}
+                    : 'Welcome back, operator'}
               </h2>
               <p>
                 {mode === 'setup'
-                  ? 'Secure this device with a password.'
+                  ? '> lock this device with a master password _'
                   : mode === 'recovery'
-                    ? 'Enter your recovery key, then choose a new password.'
-                    : 'Sign in to unlock your workspace.'}
+                    ? '> supply recovery key + new password _'
+                    : '> authenticate to unlock the workspace _'}
               </p>
             </div>
           </div>

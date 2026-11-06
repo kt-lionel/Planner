@@ -8,7 +8,7 @@ type Mode = 'setup' | 'action-setup' | 'locked' | 'open';
 
 type SaveOutcome = 'saved' | 'retry' | string;
 
-const AVATAR_COLORS = ['#3b82f6', '#34d399', '#facc15', '#f87171', '#a78bfa', '#f97316'];
+const AVATAR_COLORS = ['#00f0ff', '#27e2a4', '#fcd200', '#ff4d6d', '#a78bfa', '#f97316'];
 
 function hostOf(url?: string): string | undefined {
   if (!url) return undefined;

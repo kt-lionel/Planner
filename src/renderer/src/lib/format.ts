@@ -2,14 +2,14 @@ import type { Task, TaskStatus } from '@shared/types';
 import { STATUS_LABELS } from '@shared/types';
 
 const AVATAR_COLORS = [
-  '#f59e0b',
-  '#22c55e',
-  '#38bdf8',
-  '#f472b6',
+  '#fcd200',
+  '#27e2a4',
+  '#00f0ff',
+  '#ff4d6d',
   '#a78bfa',
-  '#34d399',
-  '#fbbf24',
-  '#fb7185'
+  '#fff066',
+  '#ff7e88',
+  '#7afcff'
 ];
 
 export function initials(name: string): string {

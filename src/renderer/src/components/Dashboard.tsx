@@ -93,13 +93,25 @@ export default function Dashboard({
 
   return (
     <main className="dash">
-      <div className="dash-head">
-        <div>
-          <span className="dash-kicker">Overview</span>
-          <h1>Dashboard</h1>
+      <section className="console-hero">
+        <span className="dash-kicker">Operations console</span>
+        <h1>ANZIKA Dashboard</h1>
+        <p className="hero-tagline">
+          Your week at a glance — live status across tasks, deadlines, findings and the vault. All
+          encrypted on this device.
+        </p>
+        <div className="hero-meta-row">
+          <span className="hero-chip">⛨ AES-256 · encrypted</span>
+          <span className="hero-chip y">⏱ {weekLabel}</span>
+          <span className="hero-chip">
+            ▣ {done}/{total} done
+          </span>
+          <span className={`hero-chip${overdue.length > 0 ? ' y' : ''}`}>
+            ⚑ {overdue.length} overdue
+          </span>
+          <span className="hero-chip">✦ {vuln.findings.length} findings</span>
         </div>
-        <span className="dash-range">{weekLabel}</span>
-      </div>
+      </section>
 
       <TodayPanel
         tasks={tasks}
@@ -183,13 +195,13 @@ export default function Dashboard({
           <h2>Overall completion</h2>
           <div className="ring-wrap">
             <svg viewBox="0 0 120 120" className="ring-svg" role="img" aria-label={`${pct}% done`}>
-              <circle cx="60" cy="60" r="52" fill="none" stroke="#1d2c4d" strokeWidth="12" />
+              <circle cx="60" cy="60" r="52" fill="none" stroke="#171b24" strokeWidth="12" />
               <circle
                 cx="60"
                 cy="60"
                 r="52"
                 fill="none"
-                stroke="#facc15"
+                stroke="#fcd200"
                 strokeWidth="12"
                 strokeLinecap="round"
                 strokeDasharray={`${(pct / 100) * C} ${C}`}
@@ -209,7 +221,7 @@ export default function Dashboard({
               <i style={{ background: 'var(--red)' }} /> {blocked} blocked
             </span>
             <span>
-              <i style={{ background: '#94a3b8' }} /> {canceled} canceled
+              <i style={{ background: 'var(--muted-2)' }} /> {canceled} canceled
             </span>
           </div>
         </section>
@@ -294,16 +306,7 @@ export default function Dashboard({
                       className="bar-fill"
                       style={{
                         width: `${Math.round((riskCounts[i] / riskMax) * 100)}%`,
-                        background:
-                          risk === 'Critical'
-                            ? '#c00000'
-                            : risk === 'High'
-                              ? '#ff0000'
-                              : risk === 'Medium'
-                                ? '#ffb000'
-                                : risk === 'Low'
-                                  ? '#00b050'
-                                  : '#808080'
+                        background: RISK_COLORS[risk]
                       }}
                     />
                   </span>
