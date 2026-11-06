@@ -1,0 +1,60 @@
+name: Release
+
+# Tag a build (git tag v1.0.1 && git push --tags) to produce signed-off
+# installers for both Linux and Windows and attach them to a GitHub release.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+
+      - name: Build Linux installers (AppImage + deb)
+        if: runner.os == 'Linux'
+        run: npm run dist:linux
+
+      - name: Build Windows installer (NSIS)
+        if: runner.os == 'Windows'
+        run: npm run dist:win
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANZIKA-${{ runner.os }}-${{ github.ref_name }}
+          if-no-files-found: error
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.exe
+
+      - name: Attach build to GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.exe

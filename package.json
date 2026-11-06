@@ -16,7 +16,10 @@
     "smoke:ui": "electron-vite build && electron out/main/index.js --smoke-ui",
     "test": "npm run typecheck && electron-vite build && electron out/main/index.js --smoke && electron out/main/index.js --smoke-ui && electron out/main/index.js --smoke-auth",
     "package": "electron-vite build && electron-builder --dir",
-    "dist": "electron-vite build && electron-builder --linux AppImage"
+    "dist": "electron-vite build && electron-builder --linux AppImage deb",
+    "dist:linux": "electron-vite build && electron-builder --linux AppImage deb",
+    "dist:deb": "electron-vite build && electron-builder --linux deb",
+    "dist:win": "electron-vite build && electron-builder --win nsis"
   },
   "build": {
     "appId": "com.mutabazi.weeklyplanner",
@@ -33,14 +36,43 @@
     "linux": {
       "target": [
         "AppImage",
+        "deb",
         "dir"
       ],
       "category": "Office",
       "icon": "build/icon.png",
-      "synopsis": "Weekly plan board with recurring tasks and report export",
+      "synopsis": "Weekly plan board with recurring tasks, vault and report export",
+      "description": "Desktop weekly plan manager with tasks, assignees, recurring duties, asset registry, engagement scoping and weekly report (PPT/XLSX/PDF) export.",
       "maintainer": "mutabazi",
       "vendor": "mutabazi",
       "syncDesktopName": true
+    },
+    "deb": {
+      "packageCategory": "Office",
+      "artifactName": "ANZIKA-${version}.${ext}",
+      "priority": "optional"
+    },
+    "appImage": {
+      "artifactName": "ANZIKA-${version}.${ext}"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "ANZIKA-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ANZIKA",
+      "uninstallDisplayName": "ANZIKA ${version}",
+      "deleteAppDataOnUninstall": false,
+      "allowElevation": true,
+      "differentialPackage": false
     }
   },
   "dependencies": {

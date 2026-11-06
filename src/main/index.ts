@@ -1,6 +1,6 @@
 import { app, BrowserWindow, clipboard, dialog, ipcMain } from 'electron';
 import { createHash } from 'crypto';
-import { access, mkdir, readFile, rm, writeFile } from 'fs/promises';
+import { access, mkdir, readFile, rm, stat, writeFile } from 'fs/promises';
 import { Workbook } from 'exceljs';
 import { tmpdir } from 'os';
 import { basename, dirname, extname, join } from 'path';
@@ -70,6 +70,16 @@ import {
   vaultActionReset
 } from './vault';
 import type { VaultUpsert } from '../shared/types';
+import {
+  asPlanData,
+  asSaveFilters,
+  asString,
+  isHttpUrl,
+  MAX_FILE_BYTES,
+  MAX_KEY_TEXT,
+  MAX_SECRET,
+  MAX_USERNAME
+} from './validate';
 
 const SMOKE = process.argv.includes('--smoke');
 const SMOKE_UI = process.argv.includes('--smoke-ui');
@@ -101,11 +111,11 @@ function registerIpc(): void {
   ipcMain.handle('auth:status', (): Promise<AuthStatus> => authStatus());
 
   ipcMain.handle('auth:setup', (_event, username: string, password: string): Promise<AuthResult> =>
-    setupUser(username, password)
+    setupUser(asString(username, MAX_USERNAME), asString(password, MAX_SECRET))
   );
 
   ipcMain.handle('auth:login', (_event, username: string, password: string): Promise<AuthResult> =>
-    verifyLogin(username, password).then((result) => {
+    verifyLogin(asString(username, MAX_USERNAME), asString(password, MAX_SECRET)).then((result) => {
       if (result.ok) lockVault();
       return result;
     })
@@ -117,7 +127,7 @@ function registerIpc(): void {
   });
 
   ipcMain.handle('auth:recover', (_event, recoveryKey: string, password: string): Promise<AuthResult> =>
-    recoverAccount(recoveryKey, password)
+    recoverAccount(asString(recoveryKey, MAX_KEY_TEXT), asString(password, MAX_SECRET))
   );
 
   ipcMain.handle('auth:recovery-key', (): Promise<RecoveryResult> => createRecoveryKey());
@@ -161,18 +171,18 @@ function registerIpc(): void {
   );
 
   ipcMain.handle('app:copyText', (_event, text: string): void => {
-    clipboard.writeText(String(text ?? ''));
+    clipboard.writeText(asString(text));
   });
 
   ipcMain.handle('app:openExternal', (_event, url: string): void => {
-    const target = String(url ?? '');
-    if (/^https?:\/\//.test(target)) {
+    const target = asString(url, 2048);
+    if (isHttpUrl(target)) {
       void import('electron').then(({ shell }) => shell.openExternal(target));
     }
   });
 
   ipcMain.handle('app:hashText', (_event, text: string): Record<string, string> => {
-    const buf = Buffer.from(String(text ?? ''), 'utf8');
+    const buf = Buffer.from(asString(text), 'utf8');
     const hex = (alg: string): string => createHash(alg).update(buf).digest('hex');
     return { md5: hex('md5'), sha1: hex('sha1'), sha256: hex('sha256'), sha512: hex('sha512') };
   });
@@ -188,8 +198,9 @@ function registerIpc(): void {
   ipcMain.handle('plan:save', (_event, data: PlanData) =>
     withPlanLock(async (): Promise<void> => {
       // The renderer never sees the vault — keep whatever is stored on disk.
+      const validated = asPlanData(data);
       const current = await loadPlanForSession();
-      return savePlanForSession({ ...data, vault: current.vault });
+      return savePlanForSession({ ...validated, vault: current.vault });
     })
   );
 
@@ -203,12 +214,12 @@ function registerIpc(): void {
     ): Promise<SaveResult> => {
       try {
         const win = parentWindow();
-        const options = { defaultPath: defaultName, filters };
+        const options = { defaultPath: asString(defaultName, 255), filters: asSaveFilters(filters) };
         const result = win
           ? await dialog.showSaveDialog(win, options)
           : await dialog.showSaveDialog(options);
         if (result.canceled || !result.filePath) return null;
-        await writeFile(result.filePath, content, 'utf8');
+        await writeFile(result.filePath, asString(content), 'utf8');
         return { ok: true, path: result.filePath };
       } catch (err) {
         return { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -282,6 +293,8 @@ function registerIpc(): void {
         : await dialog.showOpenDialog(options);
       if (result.canceled || !result.filePaths[0]) return null;
       const path = result.filePaths[0];
+      const info = await stat(path);
+      if (info.size > MAX_FILE_BYTES) return null;
       return { name: basename(path), text: await readFile(path, 'utf8') };
     } catch {
       return null;
@@ -326,6 +339,8 @@ function registerIpc(): void {
           : await dialog.showOpenDialog(options);
         if (result.canceled || !result.filePaths[0]) return null;
         const path = result.filePaths[0];
+        const info = await stat(path);
+        if (info.size > MAX_FILE_BYTES) return null;
         const ext = extname(path).toLowerCase();
         if (ext === '.csv' || ext === '.tsv' || ext === '.txt') {
           return { name: basename(path), rows: parseAssetSheet(await readFile(path, 'utf8')) };
@@ -555,7 +570,7 @@ function registerIpc(): void {
     'report:save-evidence',
     async (_event, base64: string, mime: string): Promise<string | null> => {
       try {
-        return await saveEvidenceFile(base64, mime);
+        return await saveEvidenceFile(asString(base64, MAX_FILE_BYTES), asString(mime, 64));
       } catch {
         return null;
       }
@@ -580,17 +595,23 @@ function createWindow(show = true): BrowserWindow {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
+      sandbox: true,
       spellcheck: false
     }
   });
+
+  // Deny every optional web permission (camera, microphone, notifications…).
+  // The app uses none of them, so there is nothing to grant.
+  window.webContents.session.setPermissionRequestHandler(
+    (_wc, _permission, callback) => callback(false)
+  );
 
   window.once('ready-to-show', () => {
     if (show) window.show();
   });
 
   window.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:\/\//.test(url)) void import('electron').then(({ shell }) => shell.openExternal(url));
+    if (isHttpUrl(url)) void import('electron').then(({ shell }) => shell.openExternal(url));
     return { action: 'deny' };
   });
 
@@ -3044,6 +3065,20 @@ void app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
+
+// One instance keeps a single writer on the encrypted plan file. A second
+// launch instead focuses the existing window.
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    const win = BrowserWindow.getAllWindows()[0];
+    if (!win) return;
+    if (win.isMinimized()) win.restore();
+    win.focus();
+  });
+}
 
 app.on('window-all-closed', () => {
   // Smoke suites create temporary windows (e.g. PDF rendering) — they exit
